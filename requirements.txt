@@ -1,0 +1,4 @@
+python-slugify
+rdflib
+requests
+sparqlwrapper

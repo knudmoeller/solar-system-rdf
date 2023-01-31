@@ -1,0 +1,51 @@
+# Moons of the solar system
+
+SELECT DISTINCT ?planet ?planetLabel ?satellite ?satelliteLabel ?satellite_image ?diameter (SAMPLE(?radius) as ?radius_sample) ?discoverer ?discovererLabel ?time_of_discovery
+WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+
+  # (natural) satellites of planets orbiting the sun
+  ?satellite
+    wdt:P31/wdt:P279* wd:Q2537 ;
+    wdt:P397 ?planet .
+
+  {
+    # things that are instances of planets (or subclasses thereof)
+    ?planet wdt:P31/wdt:P279* wd:Q634 .
+  } UNION {
+    # things that stopped being planets on 2006-09-13 (i.e. Pluto)
+    ?planet p:P31 ?statement .
+    ?statement
+      ps:P31 wd:Q634 ;
+      pq:P582 "2006-09-13T00:00:00Z"^^xsd:dateTime .
+  }
+
+  # and who's parent astronomical body is the sun 
+  ?planet wdt:P397 wd:Q525 .
+  
+  # diameter
+  OPTIONAL {
+    ?satellite wdt:P2386 ?diameter .
+  }
+
+  # radius
+  OPTIONAL {
+    ?satellite wdt:P2120 ?radius .
+  }
+
+  OPTIONAL {
+    ?satellite wdt:P18 ?satellite_image .
+  }
+  OPTIONAL {
+    ?satellite wdt:P61 ?discoverer .
+  }
+  OPTIONAL {
+    ?satellite wdt:P575 ?time_of_discovery .
+  }
+
+  # filter out hypothecial satellites (or subclasses thereof)
+  FILTER NOT EXISTS { ?satellite wdt:P31/wdt:P279* wd:Q5961257 }
+}
+# need to GROUP because I'm using an aggregation function in the SELECT clause (see top)
+GROUP BY ?planet ?planetLabel ?satellite ?satelliteLabel ?satellite_image ?diameter ?discoverer ?discovererLabel ?time_of_discovery
+ORDER BY ?planetLabel ?satelliteLabel

@@ -1,0 +1,43 @@
+# Planets of the solar system
+
+SELECT DISTINCT ?planet ?planetLabel ?apoapsis ?diameter ?planet_image ?discoverer ?discovererLabel ?time_of_discovery
+WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+
+  {
+    # things that are instances of planets (or subclasses thereof)
+    ?planet wdt:P31/wdt:P279* wd:Q634 .
+  } UNION {
+    # things that stopped being planets on 2006-09-13 (i.e. Pluto)
+    ?planet p:P31 ?statement .
+    ?statement ps:P31 wd:Q634 ;
+               pq:P582 "2006-09-13T00:00:00Z"^^xsd:dateTime .
+  }
+  
+  # and who's parent astronomical body is the sun 
+  ?planet wdt:P397 wd:Q525 .
+  
+  # but filter out hypothetical planets
+  FILTER NOT EXISTS { ?planet wdt:P31 wd:Q1974542 } 
+
+  # and their furthest distance to the sun (apoasis)
+  ?planet p:P2243/psv:P2243 [
+    wikibase:quantityAmount ?apoapsis ;
+    wikibase:quantityUnit ?apopasisUnit ;
+  ] .
+  # but only in kilometres
+  FILTER(SAMETERM(?apopasisUnit, wd:Q828224))
+  
+  # diameter
+  ?planet wdt:P2386 ?diameter .
+  
+  ?planet wdt:P18 ?planet_image .
+  
+  OPTIONAL {
+    ?planet wdt:P61 ?discoverer .
+  }
+  OPTIONAL {
+    ?planet wdt:P575 ?time_of_discovery .
+  }
+}
+ORDER BY ?apoapsis
